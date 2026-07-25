@@ -1,12 +1,13 @@
 const express = require("express");
 const pool = require("./config/db");
+const cors = require("cors");
 const studentRoutes = require("./routes/studentRoutes");
 
 const swaggerUi = require("swagger-ui-express");
 const swaggerSpec = require("./swagger");
 
 const app = express();
-
+app.use(cors());
 app.use(express.json());
 
 app.use("/students", studentRoutes);
