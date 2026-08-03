@@ -38,8 +38,60 @@ const login = async (req, res) => {
             user: {
                 id: user.id,
                 username: user.username,
-                email: user.email
+                email: user.email,
+                role: user.role
             }
+        });
+
+    } catch (error) {
+
+        console.error(error);
+
+        res.status(500).json({
+            success: false,
+            message: "Server error"
+        });
+
+    }
+};
+const register = async (req, res) => {
+
+    try {
+
+        const { username, email, password } = req.body;
+
+        if (!username || !email || !password) {
+            return res.status(400).json({
+                success: false,
+                message: "Username, email, and password are required"
+            });
+        }
+
+        const existingUser = await pool.query(
+            "SELECT * FROM users WHERE username = $1 OR email = $2",
+            [username, email]
+        );
+
+        if (existingUser.rows.length > 0) {
+            return res.status(400).json({
+                success: false,
+                message: "Username or email already taken"
+            });
+        }
+
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        const result = await pool.query(
+            `INSERT INTO users (username, email, password, role)
+            VALUES ($1, $2, $3, 'student')
+            RETURNING id, username, email, role`,
+            [username, email, hashedPassword]
+        );
+
+        res.status(201).json({
+            success: true,
+            message: "Registration successful",
+            user: result.rows[0]
         });
 
     } catch (error) {
@@ -55,5 +107,6 @@ const login = async (req, res) => {
 };
 
 module.exports = {
-    login
+    login,
+    register
 };
