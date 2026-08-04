@@ -1,10 +1,13 @@
 const pool = require("../config/db");
 const asyncHandler = require("../utils/asyncHandler");
 const { sendSuccess, sendError } = require("../utils/response");
+const getPagination = require("../utils/pagination");
 
 const VALID_STATUSES = ["Present", "Absent", "Late"];
 
 const getAllAttendance = asyncHandler(async (req, res) => {
+    const { page, limit, offset } = getPagination(req);
+
     const result = await pool.query(
         `SELECT
             attendance.id,
@@ -18,10 +21,19 @@ const getAllAttendance = asyncHandler(async (req, res) => {
         FROM attendance
         LEFT JOIN students ON attendance.student_id = students.id
         LEFT JOIN classes ON attendance.class_id = classes.id
-        ORDER BY attendance.attendance_date DESC, attendance.id DESC`
+        ORDER BY attendance.attendance_date DESC, attendance.id DESC
+        LIMIT $1 OFFSET $2`,
+        [limit, offset]
     );
 
-    sendSuccess(res, 200, "Attendance records fetched successfully", result.rows);
+    const countResult = await pool.query("SELECT COUNT(*) FROM attendance");
+    const totalRecords = parseInt(countResult.rows[0].count);
+    const totalPages = Math.ceil(totalRecords / limit);
+
+    sendSuccess(res, 200, "Attendance records fetched successfully", {
+        attendance: result.rows,
+        pagination: { page, limit, totalRecords, totalPages }
+    });
 });
 
 const createAttendance = asyncHandler(async (req, res) => {

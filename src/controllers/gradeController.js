@@ -1,11 +1,14 @@
 const pool = require("../config/db");
 const asyncHandler = require("../utils/asyncHandler");
 const { sendSuccess, sendError } = require("../utils/response");
+const getPagination = require("../utils/pagination");
 
 const MIN_GRADE = 1.0;
 const MAX_GRADE = 5.0;
 
 const getAllGrades = asyncHandler(async (req, res) => {
+    const { page, limit, offset } = getPagination(req);
+
     const result = await pool.query(
         `SELECT
             grades.id,
@@ -19,10 +22,19 @@ const getAllGrades = asyncHandler(async (req, res) => {
         FROM grades
         LEFT JOIN students ON grades.student_id = students.id
         LEFT JOIN classes ON grades.class_id = classes.id
-        ORDER BY grades.id DESC`
+        ORDER BY grades.id DESC
+        LIMIT $1 OFFSET $2`,
+        [limit, offset]
     );
 
-    sendSuccess(res, 200, "Grades fetched successfully", result.rows);
+    const countResult = await pool.query("SELECT COUNT(*) FROM grades");
+    const totalRecords = parseInt(countResult.rows[0].count);
+    const totalPages = Math.ceil(totalRecords / limit);
+
+    sendSuccess(res, 200, "Grades fetched successfully", {
+        grades: result.rows,
+        pagination: { page, limit, totalRecords, totalPages }
+    });
 });
 
 const createGrade = asyncHandler(async (req, res) => {

@@ -1,15 +1,26 @@
 const pool = require("../config/db");
 const asyncHandler = require("../utils/asyncHandler");
 const { sendSuccess, sendError } = require("../utils/response");
+const getPagination = require("../utils/pagination");
 
 const VALID_ROLES = ["admin", "teacher", "student"];
 
 const getAllUsers = asyncHandler(async (req, res) => {
+    const { page, limit, offset } = getPagination(req);
+
     const result = await pool.query(
-        "SELECT id, username, email, role, created_at FROM users ORDER BY id ASC"
+        "SELECT id, username, email, role, created_at FROM users ORDER BY id ASC LIMIT $1 OFFSET $2",
+        [limit, offset]
     );
 
-    sendSuccess(res, 200, "Users fetched successfully", result.rows);
+    const countResult = await pool.query("SELECT COUNT(*) FROM users");
+    const totalRecords = parseInt(countResult.rows[0].count);
+    const totalPages = Math.ceil(totalRecords / limit);
+
+    sendSuccess(res, 200, "Users fetched successfully", {
+        users: result.rows,
+        pagination: { page, limit, totalRecords, totalPages }
+    });
 });
 
 const updateUserRole = asyncHandler(async (req, res) => {

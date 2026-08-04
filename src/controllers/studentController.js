@@ -1,13 +1,32 @@
 const pool = require("../config/db");
 const asyncHandler = require("../utils/asyncHandler");
 const { sendSuccess, sendError } = require("../utils/response");
+const getPagination = require("../utils/pagination");
 
 const getAllStudents = asyncHandler(async (req, res) => {
+    const { page, limit, offset } = getPagination(req);
+
     const result = await pool.query(
-        "SELECT * FROM students ORDER BY id ASC"
+        "SELECT * FROM students ORDER BY id ASC LIMIT $1 OFFSET $2",
+        [limit, offset]
     );
 
-    sendSuccess(res, 200, "Students fetched successfully", result.rows);
+    const countResult = await pool.query(
+        "SELECT COUNT(*) FROM students"
+    );
+
+    const totalRecords = parseInt(countResult.rows[0].count);
+    const totalPages = Math.ceil(totalRecords / limit);
+
+    sendSuccess(res, 200, "Students fetched successfully", {
+        students: result.rows,
+        pagination: {
+            page,
+            limit,
+            totalRecords,
+            totalPages
+        }
+    });
 });
 
 const getStudentById = asyncHandler(async (req, res) => {
