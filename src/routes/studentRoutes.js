@@ -1,4 +1,6 @@
 const express = require("express");
+const verifyToken = require("../middleware/authMiddleware");
+const isAdmin = require("../middleware/isAdmin");
 const router = express.Router();
 
 const {
@@ -9,6 +11,8 @@ const {
     deleteStudent
 } = require("../controllers/studentController");
 
+router.use(verifyToken);
+router.use(isAdmin);
 /**
  * @swagger
  * /students:

@@ -1,5 +1,7 @@
 const express = require("express");
 const router = express.Router();
+const verifyToken = require("../middleware/authMiddleware");
+const isAdmin = require("../middleware/isAdmin");
 
 const {
     getAllCourses,
@@ -8,6 +10,9 @@ const {
     updateCourse,
     deleteCourse
 } = require("../controllers/courseController");
+
+router.use(verifyToken);
+router.use(isAdmin);
 
 router.get("/", getAllCourses);
 router.get("/:id", getCourseById);

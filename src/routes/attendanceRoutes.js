@@ -1,5 +1,7 @@
 const express = require("express");
 const router = express.Router();
+const verifyToken = require("../middleware/authMiddleware");
+const isAdmin = require("../middleware/isAdmin");
 
 const {
     getAllAttendance,
@@ -7,6 +9,9 @@ const {
     updateAttendance,
     deleteAttendance
 } = require("../controllers/attendanceController");
+
+router.use(verifyToken);
+router.use(isAdmin);
 
 router.get("/", getAllAttendance);
 router.post("/", createAttendance);

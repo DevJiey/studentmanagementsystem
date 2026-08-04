@@ -24,12 +24,27 @@ app.use("/attendance", attendanceRoutes);
 app.use("/grades", gradeRoutes);
 app.use("/users", userRoutes);
 app.use("/auth", authRoutes);
-
 app.use(
     "/api-docs",
     swaggerUi.serve,
     swaggerUi.setup(swaggerSpec)
 );
+// 404 handler
+app.use((req, res) => {
+    res.status(404).json({
+        success: false,
+        message: `Route ${req.method} ${req.originalUrl} not found`
+    });
+});
+// Centralized error handler
+app.use((err, req, res, next) => {
+    console.error(err.stack);
+
+    res.status(err.status || 500).json({
+        success: false,
+        message: err.message || "Something went wrong on the server"
+    });
+});
 
 const PORT = process.env.PORT || 5000;
 
