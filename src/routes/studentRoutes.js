@@ -1,7 +1,6 @@
 const express = require("express");
-const verifyToken = require("../middleware/authMiddleware");
-const isAdmin = require("../middleware/isAdmin");
 const router = express.Router();
+const verifyToken = require("../middleware/authMiddleware");
 
 const {
     getAllStudents,
@@ -12,13 +11,14 @@ const {
 } = require("../controllers/studentController");
 
 router.use(verifyToken);
-router.use(isAdmin);
+
 /**
  * @swagger
  * /students:
  *   get:
  *     summary: Get all students
  *     description: Retrieve all students from the database.
+ *     tags: [Students]
  *     responses:
  *       200:
  *         description: List of students
@@ -31,6 +31,7 @@ router.get("/", getAllStudents);
  *   get:
  *     summary: Get student by ID
  *     description: Retrieve a single student by ID.
+ *     tags: [Students]
  *     parameters:
  *       - in: path
  *         name: id
@@ -51,6 +52,7 @@ router.get("/:id", getStudentById);
  *   post:
  *     summary: Create a new student
  *     description: Add a new student to the database.
+ *     tags: [Students]
  *     requestBody:
  *       required: true
  *       content:
@@ -84,6 +86,7 @@ router.post("/", createStudent);
  *   put:
  *     summary: Update student
  *     description: Update an existing student.
+ *     tags: [Students]
  *     parameters:
  *       - in: path
  *         name: id
@@ -104,6 +107,7 @@ router.put("/:id", updateStudent);
  *   delete:
  *     summary: Delete student
  *     description: Remove a student from the database.
+ *     tags: [Students]
  *     parameters:
  *       - in: path
  *         name: id
