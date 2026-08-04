@@ -1,12 +1,13 @@
 const pool = require("../config/db");
 const asyncHandler = require("../utils/asyncHandler");
+const { sendSuccess, sendError } = require("../utils/response");
 
 const getAllTeachers = asyncHandler(async (req, res) => {
     const result = await pool.query(
         "SELECT * FROM teachers ORDER BY id ASC"
     );
 
-    res.json(result.rows);
+    sendSuccess(res, 200, "Teachers fetched successfully", result.rows);
 });
 
 const getTeacherById = asyncHandler(async (req, res) => {
@@ -18,29 +19,23 @@ const getTeacherById = asyncHandler(async (req, res) => {
     );
 
     if (result.rows.length === 0) {
-        return res.status(404).json({
-            message: "Teacher not found"
-        });
+        return sendError(res, 404, "Teacher not found");
     }
 
-    res.json(result.rows[0]);
+    sendSuccess(res, 200, "Teacher fetched successfully", result.rows[0]);
 });
 
 const createTeacher = asyncHandler(async (req, res) => {
     const { employee_number, first_name, last_name, email, department } = req.body;
 
     if (!employee_number || !first_name || !last_name || !email) {
-        return res.status(400).json({
-            message: "Employee number, first name, last name, and email are required"
-        });
+        return sendError(res, 400, "Employee number, first name, last name, and email are required");
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
     if (!emailRegex.test(email)) {
-        return res.status(400).json({
-            message: "Invalid email format"
-        });
+        return sendError(res, 400, "Invalid email format");
     }
 
     const existingEmployeeNumber = await pool.query(
@@ -49,9 +44,7 @@ const createTeacher = asyncHandler(async (req, res) => {
     );
 
     if (existingEmployeeNumber.rows.length > 0) {
-        return res.status(400).json({
-            message: "Employee number already exists"
-        });
+        return sendError(res, 400, "Employee number already exists");
     }
 
     const existingEmail = await pool.query(
@@ -60,9 +53,7 @@ const createTeacher = asyncHandler(async (req, res) => {
     );
 
     if (existingEmail.rows.length > 0) {
-        return res.status(400).json({
-            message: "Email already exists"
-        });
+        return sendError(res, 400, "Email already exists");
     }
 
     const result = await pool.query(
@@ -73,7 +64,7 @@ const createTeacher = asyncHandler(async (req, res) => {
         [employee_number, first_name, last_name, email, department]
     );
 
-    res.status(201).json(result.rows[0]);
+    sendSuccess(res, 201, "Teacher created successfully", result.rows[0]);
 });
 
 const updateTeacher = asyncHandler(async (req, res) => {
@@ -94,12 +85,10 @@ const updateTeacher = asyncHandler(async (req, res) => {
     );
 
     if (result.rows.length === 0) {
-        return res.status(404).json({
-            message: "Teacher not found"
-        });
+        return sendError(res, 404, "Teacher not found");
     }
 
-    res.json(result.rows[0]);
+    sendSuccess(res, 200, "Teacher updated successfully", result.rows[0]);
 });
 
 const deleteTeacher = asyncHandler(async (req, res) => {
@@ -111,14 +100,10 @@ const deleteTeacher = asyncHandler(async (req, res) => {
     );
 
     if (result.rows.length === 0) {
-        return res.status(404).json({
-            message: "Teacher not found"
-        });
+        return sendError(res, 404, "Teacher not found");
     }
 
-    res.json({
-        message: "Teacher deleted successfully"
-    });
+    sendSuccess(res, 200, "Teacher deleted successfully");
 });
 
 module.exports = {

@@ -1,5 +1,6 @@
 const pool = require("../config/db");
 const asyncHandler = require("../utils/asyncHandler");
+const { sendSuccess, sendError } = require("../utils/response");
 
 const getAllClasses = asyncHandler(async (req, res) => {
     const result = await pool.query(
@@ -19,7 +20,7 @@ const getAllClasses = asyncHandler(async (req, res) => {
         ORDER BY classes.id ASC`
     );
 
-    res.json(result.rows);
+    sendSuccess(res, 200, "Classes fetched successfully", result.rows);
 });
 
 const getClassById = asyncHandler(async (req, res) => {
@@ -44,21 +45,17 @@ const getClassById = asyncHandler(async (req, res) => {
     );
 
     if (result.rows.length === 0) {
-        return res.status(404).json({
-            message: "Class not found"
-        });
+        return sendError(res, 404, "Class not found");
     }
 
-    res.json(result.rows[0]);
+    sendSuccess(res, 200, "Class fetched successfully", result.rows[0]);
 });
 
 const createClass = asyncHandler(async (req, res) => {
     const { class_name, course_id, teacher_id, schedule } = req.body;
 
     if (!class_name) {
-        return res.status(400).json({
-            message: "Class name is required"
-        });
+        return sendError(res, 400, "Class name is required");
     }
 
     const result = await pool.query(
@@ -69,7 +66,7 @@ const createClass = asyncHandler(async (req, res) => {
         [class_name, course_id || null, teacher_id || null, schedule]
     );
 
-    res.status(201).json(result.rows[0]);
+    sendSuccess(res, 201, "Class created successfully", result.rows[0]);
 });
 
 const updateClass = asyncHandler(async (req, res) => {
@@ -89,12 +86,10 @@ const updateClass = asyncHandler(async (req, res) => {
     );
 
     if (result.rows.length === 0) {
-        return res.status(404).json({
-            message: "Class not found"
-        });
+        return sendError(res, 404, "Class not found");
     }
 
-    res.json(result.rows[0]);
+    sendSuccess(res, 200, "Class updated successfully", result.rows[0]);
 });
 
 const deleteClass = asyncHandler(async (req, res) => {
@@ -106,14 +101,10 @@ const deleteClass = asyncHandler(async (req, res) => {
     );
 
     if (result.rows.length === 0) {
-        return res.status(404).json({
-            message: "Class not found"
-        });
+        return sendError(res, 404, "Class not found");
     }
 
-    res.json({
-        message: "Class deleted successfully"
-    });
+    sendSuccess(res, 200, "Class deleted successfully");
 });
 
 module.exports = {

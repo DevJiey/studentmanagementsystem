@@ -2,6 +2,7 @@ const pool = require("../config/db");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const asyncHandler = require("../utils/asyncHandler");
+const { sendSuccess, sendError } = require("../utils/response");
 
 const login = asyncHandler(async (req, res) => {
     const { username, password } = req.body;
@@ -12,10 +13,7 @@ const login = asyncHandler(async (req, res) => {
     );
 
     if (result.rows.length === 0) {
-        return res.status(401).json({
-            success: false,
-            message: "Invalid username or password"
-        });
+        return sendError(res, 401, "Invalid username or password");
     }
 
     const user = result.rows[0];
@@ -26,10 +24,7 @@ const login = asyncHandler(async (req, res) => {
     );
 
     if (!passwordMatch) {
-        return res.status(401).json({
-            success: false,
-            message: "Invalid username or password"
-        });
+        return sendError(res, 401, "Invalid username or password");
     }
 
     const token = jwt.sign(
@@ -38,9 +33,7 @@ const login = asyncHandler(async (req, res) => {
         { expiresIn: "5h" }
     );
 
-    res.status(200).json({
-        success: true,
-        message: "Login successful",
+    sendSuccess(res, 200, "Login successful", {
         token,
         user: {
             id: user.id,
@@ -55,10 +48,7 @@ const register = asyncHandler(async (req, res) => {
     const { username, email, password } = req.body;
 
     if (!username || !email || !password) {
-        return res.status(400).json({
-            success: false,
-            message: "Username, email, and password are required"
-        });
+        return sendError(res, 400, "Username, email, and password are required");
     }
 
     const existingUser = await pool.query(
@@ -67,10 +57,7 @@ const register = asyncHandler(async (req, res) => {
     );
 
     if (existingUser.rows.length > 0) {
-        return res.status(400).json({
-            success: false,
-            message: "Username or email already taken"
-        });
+        return sendError(res, 400, "Username or email already taken");
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -82,11 +69,7 @@ const register = asyncHandler(async (req, res) => {
         [username, email, hashedPassword]
     );
 
-    res.status(201).json({
-        success: true,
-        message: "Registration successful",
-        user: result.rows[0]
-    });
+    sendSuccess(res, 201, "Registration successful", result.rows[0]);
 });
 
 module.exports = {

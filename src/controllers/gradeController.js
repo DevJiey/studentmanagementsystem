@@ -1,5 +1,9 @@
 const pool = require("../config/db");
 const asyncHandler = require("../utils/asyncHandler");
+const { sendSuccess, sendError } = require("../utils/response");
+
+const MIN_GRADE = 1.0;
+const MAX_GRADE = 5.0;
 
 const getAllGrades = asyncHandler(async (req, res) => {
     const result = await pool.query(
@@ -18,16 +22,20 @@ const getAllGrades = asyncHandler(async (req, res) => {
         ORDER BY grades.id DESC`
     );
 
-    res.json(result.rows);
+    sendSuccess(res, 200, "Grades fetched successfully", result.rows);
 });
 
 const createGrade = asyncHandler(async (req, res) => {
     const { student_id, class_id, grade, remarks } = req.body;
 
     if (!student_id || !class_id || grade === undefined || grade === "") {
-        return res.status(400).json({
-            message: "Student, class, and grade are required"
-        });
+        return sendError(res, 400, "Student, class, and grade are required");
+    }
+
+    const numericGrade = Number(grade);
+
+    if (isNaN(numericGrade) || numericGrade < MIN_GRADE || numericGrade > MAX_GRADE) {
+        return sendError(res, 400, `Grade must be a number between ${MIN_GRADE} and ${MAX_GRADE}`);
     }
 
     const result = await pool.query(
@@ -35,15 +43,25 @@ const createGrade = asyncHandler(async (req, res) => {
         (student_id, class_id, grade, remarks)
         VALUES ($1, $2, $3, $4)
         RETURNING *`,
-        [student_id, class_id, grade, remarks]
+        [student_id, class_id, numericGrade, remarks]
     );
 
-    res.status(201).json(result.rows[0]);
+    sendSuccess(res, 201, "Grade created successfully", result.rows[0]);
 });
 
 const updateGrade = asyncHandler(async (req, res) => {
     const { id } = req.params;
     const { student_id, class_id, grade, remarks } = req.body;
+
+    let numericGrade = grade;
+
+    if (grade !== undefined && grade !== "") {
+        numericGrade = Number(grade);
+
+        if (isNaN(numericGrade) || numericGrade < MIN_GRADE || numericGrade > MAX_GRADE) {
+            return sendError(res, 400, `Grade must be a number between ${MIN_GRADE} and ${MAX_GRADE}`);
+        }
+    }
 
     const result = await pool.query(
         `UPDATE grades
@@ -54,16 +72,14 @@ const updateGrade = asyncHandler(async (req, res) => {
             updated_at = CURRENT_TIMESTAMP
         WHERE id = $5
         RETURNING *`,
-        [student_id, class_id, grade, remarks, id]
+        [student_id, class_id, numericGrade, remarks, id]
     );
 
     if (result.rows.length === 0) {
-        return res.status(404).json({
-            message: "Grade record not found"
-        });
+        return sendError(res, 404, "Grade record not found");
     }
 
-    res.json(result.rows[0]);
+    sendSuccess(res, 200, "Grade updated successfully", result.rows[0]);
 });
 
 const deleteGrade = asyncHandler(async (req, res) => {
@@ -75,14 +91,10 @@ const deleteGrade = asyncHandler(async (req, res) => {
     );
 
     if (result.rows.length === 0) {
-        return res.status(404).json({
-            message: "Grade record not found"
-        });
+        return sendError(res, 404, "Grade record not found");
     }
 
-    res.json({
-        message: "Grade record deleted successfully"
-    });
+    sendSuccess(res, 200, "Grade deleted successfully");
 });
 
 module.exports = {

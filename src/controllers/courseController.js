@@ -1,12 +1,13 @@
 const pool = require("../config/db");
 const asyncHandler = require("../utils/asyncHandler");
+const { sendSuccess, sendError } = require("../utils/response");
 
 const getAllCourses = asyncHandler(async (req, res) => {
     const result = await pool.query(
         "SELECT * FROM courses ORDER BY id ASC"
     );
 
-    res.json(result.rows);
+    sendSuccess(res, 200, "Courses fetched successfully", result.rows);
 });
 
 const getCourseById = asyncHandler(async (req, res) => {
@@ -18,21 +19,17 @@ const getCourseById = asyncHandler(async (req, res) => {
     );
 
     if (result.rows.length === 0) {
-        return res.status(404).json({
-            message: "Course not found"
-        });
+        return sendError(res, 404, "Course not found");
     }
 
-    res.json(result.rows[0]);
+    sendSuccess(res, 200, "Course fetched successfully", result.rows[0]);
 });
 
 const createCourse = asyncHandler(async (req, res) => {
     const { course_code, course_name, description } = req.body;
 
     if (!course_code || !course_name) {
-        return res.status(400).json({
-            message: "Course code and course name are required"
-        });
+        return sendError(res, 400, "Course code and course name are required");
     }
 
     const existingCourse = await pool.query(
@@ -41,9 +38,7 @@ const createCourse = asyncHandler(async (req, res) => {
     );
 
     if (existingCourse.rows.length > 0) {
-        return res.status(400).json({
-            message: "Course code already exists"
-        });
+        return sendError(res, 400, "Course code already exists");
     }
 
     const result = await pool.query(
@@ -54,7 +49,7 @@ const createCourse = asyncHandler(async (req, res) => {
         [course_code, course_name, description]
     );
 
-    res.status(201).json(result.rows[0]);
+    sendSuccess(res, 201, "Course created successfully", result.rows[0]);
 });
 
 const updateCourse = asyncHandler(async (req, res) => {
@@ -73,12 +68,10 @@ const updateCourse = asyncHandler(async (req, res) => {
     );
 
     if (result.rows.length === 0) {
-        return res.status(404).json({
-            message: "Course not found"
-        });
+        return sendError(res, 404, "Course not found");
     }
 
-    res.json(result.rows[0]);
+    sendSuccess(res, 200, "Course updated successfully", result.rows[0]);
 });
 
 const deleteCourse = asyncHandler(async (req, res) => {
@@ -90,14 +83,10 @@ const deleteCourse = asyncHandler(async (req, res) => {
     );
 
     if (result.rows.length === 0) {
-        return res.status(404).json({
-            message: "Course not found"
-        });
+        return sendError(res, 404, "Course not found");
     }
 
-    res.json({
-        message: "Course deleted successfully"
-    });
+    sendSuccess(res, 200, "Course deleted successfully");
 });
 
 module.exports = {

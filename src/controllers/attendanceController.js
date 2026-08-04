@@ -1,5 +1,8 @@
 const pool = require("../config/db");
 const asyncHandler = require("../utils/asyncHandler");
+const { sendSuccess, sendError } = require("../utils/response");
+
+const VALID_STATUSES = ["Present", "Absent", "Late"];
 
 const getAllAttendance = asyncHandler(async (req, res) => {
     const result = await pool.query(
@@ -18,16 +21,18 @@ const getAllAttendance = asyncHandler(async (req, res) => {
         ORDER BY attendance.attendance_date DESC, attendance.id DESC`
     );
 
-    res.json(result.rows);
+    sendSuccess(res, 200, "Attendance records fetched successfully", result.rows);
 });
 
 const createAttendance = asyncHandler(async (req, res) => {
     const { student_id, class_id, attendance_date, status } = req.body;
 
     if (!student_id || !class_id || !attendance_date || !status) {
-        return res.status(400).json({
-            message: "Student, class, date, and status are required"
-        });
+        return sendError(res, 400, "Student, class, date, and status are required");
+    }
+
+    if (!VALID_STATUSES.includes(status)) {
+        return sendError(res, 400, `Status must be one of: ${VALID_STATUSES.join(", ")}`);
     }
 
     const result = await pool.query(
@@ -38,12 +43,16 @@ const createAttendance = asyncHandler(async (req, res) => {
         [student_id, class_id, attendance_date, status]
     );
 
-    res.status(201).json(result.rows[0]);
+    sendSuccess(res, 201, "Attendance record created successfully", result.rows[0]);
 });
 
 const updateAttendance = asyncHandler(async (req, res) => {
     const { id } = req.params;
     const { student_id, class_id, attendance_date, status } = req.body;
+
+    if (status && !VALID_STATUSES.includes(status)) {
+        return sendError(res, 400, `Status must be one of: ${VALID_STATUSES.join(", ")}`);
+    }
 
     const result = await pool.query(
         `UPDATE attendance
@@ -57,12 +66,10 @@ const updateAttendance = asyncHandler(async (req, res) => {
     );
 
     if (result.rows.length === 0) {
-        return res.status(404).json({
-            message: "Attendance record not found"
-        });
+        return sendError(res, 404, "Attendance record not found");
     }
 
-    res.json(result.rows[0]);
+    sendSuccess(res, 200, "Attendance record updated successfully", result.rows[0]);
 });
 
 const deleteAttendance = asyncHandler(async (req, res) => {
@@ -74,14 +81,10 @@ const deleteAttendance = asyncHandler(async (req, res) => {
     );
 
     if (result.rows.length === 0) {
-        return res.status(404).json({
-            message: "Attendance record not found"
-        });
+        return sendError(res, 404, "Attendance record not found");
     }
 
-    res.json({
-        message: "Attendance record deleted successfully"
-    });
+    sendSuccess(res, 200, "Attendance record deleted successfully");
 });
 
 module.exports = {

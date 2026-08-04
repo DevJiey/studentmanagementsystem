@@ -1,13 +1,15 @@
 const pool = require("../config/db");
 const asyncHandler = require("../utils/asyncHandler");
+const { sendSuccess, sendError } = require("../utils/response");
 
 const getAllStudents = asyncHandler(async (req, res) => {
     const result = await pool.query(
         "SELECT * FROM students ORDER BY id ASC"
     );
 
-    res.json(result.rows);
+    sendSuccess(res, 200, "Students fetched successfully", result.rows);
 });
+
 const getStudentById = asyncHandler(async (req, res) => {
     const { id } = req.params;
 
@@ -17,13 +19,12 @@ const getStudentById = asyncHandler(async (req, res) => {
     );
 
     if (result.rows.length === 0) {
-        return res.status(404).json({
-            message: "Student not found"
-        });
+        return sendError(res, 404, "Student not found");
     }
 
-    res.json(result.rows[0]);
+    sendSuccess(res, 200, "Student fetched successfully", result.rows[0]);
 });
+
 const createStudent = asyncHandler(async (req, res) => {
     const {
         student_number,
@@ -42,17 +43,13 @@ const createStudent = asyncHandler(async (req, res) => {
         !year_level ||
         !email
     ) {
-        return res.status(400).json({
-            message: "All fields are required"
-        });
+        return sendError(res, 400, "All fields are required");
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
     if (!emailRegex.test(email)) {
-        return res.status(400).json({
-            message: "Invalid email format"
-        });
+        return sendError(res, 400, "Invalid email format");
     }
 
     const existingStudentNumber = await pool.query(
@@ -61,9 +58,7 @@ const createStudent = asyncHandler(async (req, res) => {
     );
 
     if (existingStudentNumber.rows.length > 0) {
-        return res.status(400).json({
-            message: "Student number already exists"
-        });
+        return sendError(res, 400, "Student number already exists");
     }
 
     const existingEmail = await pool.query(
@@ -72,9 +67,7 @@ const createStudent = asyncHandler(async (req, res) => {
     );
 
     if (existingEmail.rows.length > 0) {
-        return res.status(400).json({
-            message: "Email already exists"
-        });
+        return sendError(res, 400, "Email already exists");
     }
 
     const result = await pool.query(
@@ -99,7 +92,7 @@ const createStudent = asyncHandler(async (req, res) => {
         ]
     );
 
-    res.status(201).json(result.rows[0]);
+    sendSuccess(res, 201, "Student created successfully", result.rows[0]);
 });
 
 const updateStudent = asyncHandler(async (req, res) => {
@@ -138,12 +131,10 @@ const updateStudent = asyncHandler(async (req, res) => {
     );
 
     if (result.rows.length === 0) {
-        return res.status(404).json({
-            message: "Student not found"
-        });
+        return sendError(res, 404, "Student not found");
     }
 
-    res.json(result.rows[0]);
+    sendSuccess(res, 200, "Student updated successfully", result.rows[0]);
 });
 
 const deleteStudent = asyncHandler(async (req, res) => {
@@ -155,14 +146,10 @@ const deleteStudent = asyncHandler(async (req, res) => {
     );
 
     if (result.rows.length === 0) {
-        return res.status(404).json({
-            message: "Student not found"
-        });
+        return sendError(res, 404, "Student not found");
     }
 
-    res.json({
-        message: "Student deleted successfully"
-    });
+    sendSuccess(res, 200, "Student deleted successfully");
 });
 
 module.exports = {
